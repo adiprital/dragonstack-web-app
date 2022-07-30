@@ -1,17 +1,16 @@
 import React from 'react';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
-//import { Router, Switch, Route } from 'react-router-dom';
+import { Router, Switch, Route, Redirect } from 'react-router';
 import { render } from 'react-dom';
 import thunk from 'redux-thunk';
-//import createBrowserHistory from 'history/createBrowserHistory';
 import rootReducer from './reducers';
+import history from './history';
 import Root from './components/Root';
 import AccountDragons from './components/AccountDragons';
+import PublicDragons from './components/PublicDragons';
 import { fetchAuthenticated } from './action/account';
 import './index.css';
-
-//const history = createBrowserHistory();
 
 const store = createStore(
     rootReducer,
@@ -19,11 +18,27 @@ const store = createStore(
     applyMiddleware(thunk)
 );
 
+const AuthRoute = props => {
+    if (!store.getState().account.loggedIn) {
+        return <Redirect to={{ pathname: '/' }} />
+    }
+
+    const { component, path } = props;
+
+    return <Route poth={path} component={component} />;
+}
+
 store.dispatch(fetchAuthenticated())
 .then(() => {
     render(
         <Provider store={store}>
-            <Root />
+            <Router history={history}>
+                <Switch>
+                    <Route exact path='/' component={Root} />
+                    <AuthRoute path='/account-dragons' component={AccountDragons} />
+                    <AuthRoute path='/public-dragons' component={PublicDragons} />
+                </Switch>
+            </Router>
         </Provider>,
         document.getElementById('root')
     );
